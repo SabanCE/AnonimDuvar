@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { RefreshCw, Plus, MousePointerClick } from 'lucide-react';
+import { RefreshCw, Plus, MousePointerClick, ExternalLink } from 'lucide-react';
 import { postsApi } from './services/api';
 import { NoteCard } from './components/NoteCard';
 import { ClickNoteCreator } from './components/ClickNoteCreator';
@@ -36,7 +36,7 @@ function App() {
   }, [fetchPosts]);
 
   const handleWallClick = (e) => {
-    if (e.target.closest('button') || e.target.closest('.group')) {
+    if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.group')) {
       return;
     }
 
@@ -132,24 +132,41 @@ function App() {
       <Toast toast={toast} onClose={closeToast} />
 
       {/* Rustic Wooden Board Header */}
-      <header className="fixed top-0 left-0 right-0 z-30 pointer-events-none p-4 sm:p-6 flex items-center justify-between">
-        <div className="pointer-events-auto flex items-center gap-3 bg-[#1c0f08]/90 backdrop-blur-md px-4 py-2 rounded-lg border border-[#4a2a1a] shadow-2xl text-amber-100">
+      <header className="fixed top-0 left-0 right-0 z-30 pointer-events-none p-3 sm:p-5 flex items-center justify-between gap-2">
+        {/* Brand Badge */}
+        <div className="pointer-events-auto flex items-center gap-2.5 sm:gap-3 bg-[#1c0f08]/90 backdrop-blur-md px-3.5 sm:px-4 py-2 rounded-lg border border-[#4a2a1a] shadow-2xl text-amber-100">
           <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]" />
           <h1 className="text-xs sm:text-sm font-black tracking-widest uppercase font-serif text-amber-200">
-            ANONİM DUVAR
+            ANONİM MESAJ
           </h1>
           <span className="text-[11px] font-mono text-amber-400/80 border-l border-amber-900/60 pl-2">
             {posts.length} not
           </span>
         </div>
 
-        {/* Minimal hint & Refresh */}
+        {/* Actions & Portfolio Link */}
         <div className="pointer-events-auto flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-amber-100/90 bg-[#1c0f08]/90 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-[#4a2a1a] shadow-2xl">
+          {/* sabancodes.space Portfolio Link Button */}
+          <a
+            href="https://sabancodes.space"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1c0f08]/90 backdrop-blur-md border border-[#4a2a1a] hover:border-amber-500/70 text-amber-200 hover:text-white text-xs font-semibold shadow-2xl transition-all cursor-pointer group"
+            title="sabancodes.space adresine git"
+          >
+            <span className="hidden sm:inline">sabancodes.space</span>
+            <span className="sm:hidden">Portfolyo</span>
+            <ExternalLink className="w-3.5 h-3.5 text-amber-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </a>
+
+          {/* Hint */}
+          <div className="hidden md:flex items-center gap-1.5 text-xs text-amber-100/90 bg-[#1c0f08]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#4a2a1a] shadow-2xl">
             <MousePointerClick className="w-3.5 h-3.5 text-amber-400" />
-            <span>Panoda boş bir yere tıkla ve not iğnele</span>
+            <span>Panoda boş yere tıkla</span>
           </div>
 
+          {/* Refresh Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -174,7 +191,7 @@ function App() {
         />
       )}
 
-      {/* Content Layer (Over the fixed corkboard) */}
+      {/* Corkboard Canvas with Sticky Notes */}
       <main className="relative z-10 min-h-screen w-full pt-20 pb-28 px-4 sm:px-8">
         {/* Empty state hint */}
         {posts.length === 0 && !loading && (
