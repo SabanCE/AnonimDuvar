@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Sparkles, RefreshCw, Plus, MousePointerClick } from 'lucide-react';
+import { RefreshCw, Plus, MousePointerClick } from 'lucide-react';
 import { postsApi } from './services/api';
 import { NoteCard } from './components/NoteCard';
 import { ClickNoteCreator } from './components/ClickNoteCreator';
@@ -10,7 +10,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
-  const [creatorState, setCreatorState] = useState(null); // { x, y, posX, posY }
+  const [creatorState, setCreatorState] = useState(null);
   const wallRef = useRef(null);
 
   const triggerToast = (type, message, status) => {
@@ -21,7 +21,6 @@ function App() {
     setToast(null);
   };
 
-  // Fetch posts
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     const result = await postsApi.getPosts();
@@ -35,9 +34,7 @@ function App() {
     fetchPosts();
   }, [fetchPosts]);
 
-  // Handle canvas click to spawn creator
   const handleWallClick = (e) => {
-    // If clicking close or existing card, ignore
     if (e.target.closest('button') || e.target.closest('.group')) {
       return;
     }
@@ -56,7 +53,6 @@ function App() {
     });
   };
 
-  // Submit note created at click position
   const handleCreatePost = async (content, color) => {
     setSubmitting(true);
     const posX = creatorState?.posX ?? Math.floor(Math.random() * 70 + 15);
@@ -67,7 +63,7 @@ function App() {
     setSubmitting(false);
 
     if (result.success) {
-      triggerToast('success', 'Notun duvara yapıştırıldı! 📌', 201);
+      triggerToast('success', 'Notun tahtaya iğnelendi! 📌', 201);
       setCreatorState(null);
       if (result.data) {
         setPosts((prev) => [result.data, ...prev]);
@@ -85,12 +81,11 @@ function App() {
     }
   };
 
-  // Handle post delete (Only author can delete)
   const handleDeletePost = async (id) => {
     const result = await postsApi.deletePost(id);
 
     if (result.success) {
-      triggerToast('success', 'Notun duvardan silindi. 🗑️', 200);
+      triggerToast('success', 'Notun tahtadan kaldırıldı. 🗑️', 200);
       setPosts((prev) => prev.filter((p) => (p.id || p._id) !== id));
     } else {
       if (result.status === 403) {
@@ -101,7 +96,6 @@ function App() {
     }
   };
 
-  // Handle like
   const handleLikePost = async (id) => {
     const result = await postsApi.likePost(id);
     if (result.success) {
@@ -119,32 +113,28 @@ function App() {
     <div
       ref={wallRef}
       onClick={handleWallClick}
-      className="relative min-h-screen w-screen bg-[#07080c] text-slate-100 overflow-x-hidden overflow-y-auto select-none cursor-crosshair"
-      style={{
-        backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px)`,
-        backgroundSize: '28px 28px'
-      }}
+      className="wood-board relative min-h-screen w-screen text-slate-100 overflow-x-hidden overflow-y-auto select-none cursor-crosshair"
     >
       {/* Toast Notification */}
       <Toast toast={toast} onClose={closeToast} />
 
-      {/* Ultra-Minimal Header */}
+      {/* Rustic Wooden Board Header */}
       <header className="fixed top-0 left-0 right-0 z-30 pointer-events-none p-4 sm:p-6 flex items-center justify-between">
-        <div className="pointer-events-auto flex items-center gap-3 bg-slate-950/70 backdrop-blur-md px-4 py-2 rounded-full border border-slate-800/80 shadow-lg">
-          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
-          <h1 className="text-xs sm:text-sm font-bold tracking-wider text-slate-200">
+        <div className="pointer-events-auto flex items-center gap-3 bg-[#1c0f08]/90 backdrop-blur-md px-4 py-2 rounded-lg border border-[#3e2417] shadow-xl text-amber-100">
+          <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
+          <h1 className="text-xs sm:text-sm font-black tracking-widest uppercase font-serif text-amber-200">
             ANONİM DUVAR
           </h1>
-          <span className="text-[11px] font-mono text-slate-500 border-l border-slate-800 pl-2">
+          <span className="text-[11px] font-mono text-amber-400/80 border-l border-amber-900/60 pl-2">
             {posts.length} not
           </span>
         </div>
 
         {/* Minimal hint & Refresh */}
         <div className="pointer-events-auto flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 bg-slate-950/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-slate-800/80">
-            <MousePointerClick className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Boş bir alana tıkla ve not bırak</span>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-amber-200/90 bg-[#1c0f08]/90 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-[#3e2417] shadow-xl">
+            <MousePointerClick className="w-3.5 h-3.5 text-amber-400" />
+            <span>Tahtada boş bir yere tıkla ve not iğnele</span>
           </div>
 
           <button
@@ -153,10 +143,10 @@ function App() {
               fetchPosts();
             }}
             disabled={loading}
-            className="p-2 rounded-full bg-slate-950/70 backdrop-blur-md border border-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer shadow-lg disabled:opacity-50"
-            title="Duvarı Yenile"
+            className="p-2 rounded-lg bg-[#1c0f08]/90 backdrop-blur-md border border-[#3e2417] text-amber-300 hover:text-white transition-all cursor-pointer shadow-xl disabled:opacity-50"
+            title="Tahtayı Yenile"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-amber-400' : ''}`} />
           </button>
         </div>
       </header>
@@ -171,19 +161,19 @@ function App() {
         />
       )}
 
-      {/* Scattered Organic Note Cards Canvas */}
+      {/* Wooden Board Canvas with Sticky Notes */}
       <main className="relative min-h-screen w-full pt-20 pb-28 px-4 sm:px-8">
         {/* Empty state hint */}
         {posts.length === 0 && !loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-slate-600">
-            <Sparkles className="w-8 h-8 text-slate-700 mb-2 animate-pulse" />
-            <p className="text-sm font-medium">Duvar bomboş...</p>
-            <p className="text-xs text-slate-600 mt-1">Ekranda herhangi bir yere tıkla ve ilk notu bırak!</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-amber-200/60">
+            <div className="w-6 h-6 rounded-full bg-rose-600/60 mb-2 shadow-md" />
+            <p className="text-sm font-serif font-bold text-amber-100">Tahta Henüz Bomboş</p>
+            <p className="text-xs text-amber-300/60 mt-1">Herhangi bir yere tıkla ve ilk notu iğnele!</p>
           </div>
         )}
 
         {/* Free-Flowing Wall Grid */}
-        <div className="flex flex-wrap items-start justify-center gap-6 sm:gap-8 max-w-7xl mx-auto py-8">
+        <div className="flex flex-wrap items-start justify-center gap-7 sm:gap-9 max-w-7xl mx-auto py-8">
           {posts.map((post) => (
             <NoteCard
               key={post.id || post._id}
@@ -207,8 +197,8 @@ function App() {
             posY: 50
           });
         }}
-        className="fixed bottom-6 right-6 sm:hidden z-30 p-4 rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white shadow-2xl shadow-cyan-500/40 cursor-pointer active:scale-95 transition-all"
-        title="Not Ekle"
+        className="fixed bottom-6 right-6 sm:hidden z-30 p-4 rounded-full bg-amber-600 hover:bg-amber-500 text-white shadow-2xl shadow-black/80 cursor-pointer active:scale-95 transition-all border border-amber-400/40"
+        title="Not İğnele"
       >
         <Plus className="w-5 h-5" />
       </button>

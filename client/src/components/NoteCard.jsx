@@ -1,48 +1,54 @@
 import { useState } from 'react';
-import { Heart, Pin, Trash2 } from 'lucide-react';
+import { Heart, Trash2 } from 'lucide-react';
 
-const COLOR_VARIANTS = {
+const STICKY_COLORS = {
   yellow: {
-    border: 'border-amber-400/50 hover:border-amber-300',
-    glow: 'shadow-[0_4px_20px_rgba(251,191,36,0.12)] hover:shadow-[0_8px_30px_rgba(251,191,36,0.3)]',
-    bg: 'bg-gradient-to-b from-amber-500/10 via-slate-900/80 to-slate-950/90',
-    pin: 'text-amber-400',
-    accent: 'text-amber-300'
+    bg: 'bg-[#fef9c3]',
+    adhesive: 'border-t-[#fde047]',
+    text: 'text-[#362b0d]',
+    accent: 'text-[#715414]',
+    tag: 'bg-[#fef08a]/80 text-[#543d0c]',
+    pin: 'from-rose-600 via-rose-500 to-red-400'
   },
   cyan: {
-    border: 'border-cyan-400/50 hover:border-cyan-300',
-    glow: 'shadow-[0_4px_20px_rgba(34,211,238,0.12)] hover:shadow-[0_8px_30px_rgba(34,211,238,0.3)]',
-    bg: 'bg-gradient-to-b from-cyan-500/10 via-slate-900/80 to-slate-950/90',
-    pin: 'text-cyan-400',
-    accent: 'text-cyan-300'
+    bg: 'bg-[#e0f2fe]',
+    adhesive: 'border-t-[#7dd3fc]',
+    text: 'text-[#0c2f42]',
+    accent: 'text-[#164e63]',
+    tag: 'bg-[#bae6fd]/80 text-[#0c3a52]',
+    pin: 'from-amber-600 via-amber-500 to-yellow-400'
   },
   pink: {
-    border: 'border-pink-400/50 hover:border-pink-300',
-    glow: 'shadow-[0_4px_20px_rgba(244,114,182,0.12)] hover:shadow-[0_8px_30px_rgba(244,114,182,0.3)]',
-    bg: 'bg-gradient-to-b from-pink-500/10 via-slate-900/80 to-slate-950/90',
-    pin: 'text-pink-400',
-    accent: 'text-pink-300'
+    bg: 'bg-[#fce7f3]',
+    adhesive: 'border-t-[#f472b6]',
+    text: 'text-[#481229]',
+    accent: 'text-[#701a3d]',
+    tag: 'bg-[#fbcfe8]/80 text-[#5c1333]',
+    pin: 'from-sky-600 via-sky-500 to-cyan-400'
   },
   purple: {
-    border: 'border-purple-400/50 hover:border-purple-300',
-    glow: 'shadow-[0_4px_20px_rgba(192,132,252,0.12)] hover:shadow-[0_8px_30px_rgba(192,132,252,0.3)]',
-    bg: 'bg-gradient-to-b from-purple-500/10 via-slate-900/80 to-slate-950/90',
-    pin: 'text-purple-400',
-    accent: 'text-purple-300'
+    bg: 'bg-[#f3e8ff]',
+    adhesive: 'border-t-[#c084fc]',
+    text: 'text-[#321356]',
+    accent: 'text-[#581c87]',
+    tag: 'bg-[#e9d5ff]/80 text-[#431475]',
+    pin: 'from-emerald-600 via-emerald-500 to-green-400'
   },
   emerald: {
-    border: 'border-emerald-400/50 hover:border-emerald-300',
-    glow: 'shadow-[0_4px_20px_rgba(52,211,153,0.12)] hover:shadow-[0_8px_30px_rgba(52,211,153,0.3)]',
-    bg: 'bg-gradient-to-b from-emerald-500/10 via-slate-900/80 to-slate-950/90',
-    pin: 'text-emerald-400',
-    accent: 'text-emerald-300'
+    bg: 'bg-[#dcfce7]',
+    adhesive: 'border-t-[#86efac]',
+    text: 'text-[#0e351b]',
+    accent: 'text-[#14532d]',
+    tag: 'bg-[#bbf7d0]/80 text-[#114522]',
+    pin: 'from-red-600 via-red-500 to-rose-400'
   },
   amber: {
-    border: 'border-orange-400/50 hover:border-orange-300',
-    glow: 'shadow-[0_4px_20px_rgba(251,146,60,0.12)] hover:shadow-[0_8px_30px_rgba(251,146,60,0.3)]',
-    bg: 'bg-gradient-to-b from-orange-500/10 via-slate-900/80 to-slate-950/90',
-    pin: 'text-orange-400',
-    accent: 'text-orange-300'
+    bg: 'bg-[#ffedd5]',
+    adhesive: 'border-t-[#fb923c]',
+    text: 'text-[#3d1a0d]',
+    accent: 'text-[#7c2d12]',
+    tag: 'bg-[#fed7aa]/80 text-[#52210e]',
+    pin: 'from-blue-600 via-blue-500 to-sky-400'
   }
 };
 
@@ -61,7 +67,7 @@ export function NoteCard({ post, onLike, onDelete, isAbsolute = false }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
 
-  const style = COLOR_VARIANTS[post.color] || COLOR_VARIANTS.yellow;
+  const style = STICKY_COLORS[post.color] || STICKY_COLORS.yellow;
   const rotation = typeof post.rotation === 'number' ? post.rotation : 0;
 
   const handleLike = async (e) => {
@@ -86,7 +92,7 @@ export function NoteCard({ post, onLike, onDelete, isAbsolute = false }) {
   const handleDelete = async (e) => {
     e.stopPropagation();
     if (isDeleting) return;
-    if (window.confirm('Bu notunu duvardan silmek istediğine emin misin?')) {
+    if (window.confirm('Bu notunu tahtadan kaldırmak istediğine emin misin?')) {
       setIsDeleting(true);
       await onDelete(post.id || post._id);
     }
@@ -107,45 +113,45 @@ export function NoteCard({ post, onLike, onDelete, isAbsolute = false }) {
     <div
       onClick={(e) => e.stopPropagation()}
       style={cardStyle}
-      className={`group relative w-[230px] sm:w-[250px] p-4 rounded-2xl border backdrop-blur-md transition-all duration-300 hover:rotate-0 hover:scale-105 hover:z-40 cursor-default select-none ${style.bg} ${style.border} ${style.glow} ${
+      className={`group relative w-[230px] sm:w-[250px] p-5 pt-6 rounded-sm border-t-[10px] ${style.adhesive} ${style.bg} ${style.text} sticky-paper-shadow transition-all duration-300 hover:rotate-0 hover:scale-105 hover:z-40 cursor-default select-none ${
         isDeleting ? 'opacity-40 pointer-events-none scale-95' : ''
       }`}
     >
-      {/* Top Pin, Time & Delete button */}
-      <div className="flex items-center justify-between mb-2">
-        <Pin className={`w-3.5 h-3.5 ${style.pin} rotate-45 opacity-80 group-hover:opacity-100 transition-opacity pointer-events-none`} />
-        
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-slate-500 font-mono">
-            {formatTimeAgo(post.createdAt)}
-          </span>
-
-          {/* Sadece bu notu oluşturan kişiye silme butonu gösterilir */}
-          {post.isOwner && (
-            <button
-              onClick={handleDelete}
-              className="p-1 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-              title="Notumu Sil (DELETE 200 / 403)"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          )}
+      {/* 3D Pushpin (Raptiye) at top center */}
+      <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-10">
+        <div className={`w-4 h-4 rounded-full bg-gradient-to-tr ${style.pin} shadow-[0_2px_4px_rgba(0,0,0,0.6)] border border-black/20 flex items-center justify-center`}>
+          <div className="w-1.5 h-1.5 rounded-full bg-white/60 -mt-0.5 -ml-0.5" />
         </div>
       </div>
 
-      {/* Content */}
-      <p className="text-slate-100 text-xs sm:text-sm font-medium leading-relaxed my-2 break-words whitespace-pre-wrap min-h-[48px]">
+      {/* Top Bar: Time & Delete */}
+      <div className="flex items-center justify-between mb-2">
+        <span className={`text-[10px] font-mono tracking-tight font-medium ${style.accent} opacity-75`}>
+          {formatTimeAgo(post.createdAt)}
+        </span>
+
+        {/* Delete button (Owner only) */}
+        {post.isOwner && (
+          <button
+            onClick={handleDelete}
+            className="p-1 rounded text-red-900/60 hover:text-red-700 hover:bg-black/5 transition-colors cursor-pointer"
+            title="Notumu Tahtadan Sil"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Note Content (Looks like pen ink on real paper) */}
+      <p className="font-sans text-xs sm:text-sm font-semibold leading-relaxed my-2 break-words whitespace-pre-wrap min-h-[52px]">
         "{post.content}"
       </p>
 
-      {/* Bottom Like & Color tag */}
-      <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between">
+      {/* Bottom Bar: Like Button & Owner Tag */}
+      <div className="mt-4 pt-2.5 border-t border-black/10 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <span className={`text-[10px] uppercase font-mono tracking-wider ${style.accent} opacity-80`}>
-            #{post.color || 'not'}
-          </span>
           {post.isOwner && (
-            <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950/60 text-cyan-300 border border-cyan-500/30 font-mono">
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${style.tag}`}>
               senin
             </span>
           )}
@@ -154,19 +160,19 @@ export function NoteCard({ post, onLike, onDelete, isAbsolute = false }) {
         <button
           onClick={handleLike}
           disabled={isLiking}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
             hasLiked
-              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/50 shadow-[0_0_12px_rgba(244,63,94,0.3)]'
-              : 'bg-slate-800/70 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60'
+              ? 'bg-rose-500/15 text-rose-700 shadow-sm'
+              : 'bg-black/5 hover:bg-black/10 text-black/70 hover:text-black'
           }`}
           title="Beğen"
         >
           <Heart
-            className={`w-3 h-3 transition-transform ${
-              hasLiked ? 'fill-rose-500 text-rose-500 scale-110' : 'text-slate-400'
+            className={`w-3.5 h-3.5 transition-transform ${
+              hasLiked ? 'fill-rose-600 text-rose-600 scale-110' : 'text-black/60'
             } ${isLiking ? 'scale-125' : ''}`}
           />
-          <span className="font-mono text-[11px]">{likes}</span>
+          <span className="font-mono text-xs">{likes}</span>
         </button>
       </div>
     </div>

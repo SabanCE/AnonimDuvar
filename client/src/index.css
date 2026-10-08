@@ -7,8 +7,49 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #0d0f17;
-  color: #f1f5f9;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: #1e293b;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   overflow-x: hidden;
+}
+
+/* Realistic wooden board texture */
+.wood-board {
+  background-color: #2b1810;
+  background-image: 
+    /* Wood plank horizontal seams */
+    repeating-linear-gradient(
+      0deg,
+      rgba(15, 8, 4, 0.6) 0px,
+      rgba(15, 8, 4, 0.6) 3px,
+      rgba(60, 35, 20, 0.3) 4px,
+      transparent 5px,
+      transparent 140px
+    ),
+    /* Vertical wood grain fibers */
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.04) 0px,
+      rgba(255, 255, 255, 0.02) 2px,
+      transparent 3px,
+      transparent 18px
+    ),
+    /* Subtle organic wood knots & radial light */
+    radial-gradient(circle at 50% 40%, #4a2a1b 0%, #22120a 75%, #150a05 100%);
+  background-attachment: fixed;
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.85);
+}
+
+/* Authentic physical paper shadow */
+.sticky-paper-shadow {
+  box-shadow: 
+    0 1px 1px rgba(0, 0, 0, 0.15),
+    0 4px 8px rgba(0, 0, 0, 0.28),
+    0 12px 24px rgba(0, 0, 0, 0.35);
+}
+
+.sticky-paper-shadow:hover {
+  box-shadow: 
+    0 2px 2px rgba(0, 0, 0, 0.2),
+    0 8px 16px rgba(0, 0, 0, 0.35),
+    0 20px 32px rgba(0, 0, 0, 0.45);
 }
