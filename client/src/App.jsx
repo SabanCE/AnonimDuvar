@@ -4,6 +4,7 @@ import { postsApi } from './services/api';
 import { NoteCard } from './components/NoteCard';
 import { ClickNoteCreator } from './components/ClickNoteCreator';
 import { Toast } from './components/Toast';
+import corkboardBg from './assets/corkboard.jpg';
 
 function App() {
   const [posts, setPosts] = useState([]);
@@ -113,15 +114,23 @@ function App() {
     <div
       ref={wallRef}
       onClick={handleWallClick}
-      className="wood-board relative min-h-screen w-screen text-slate-100 overflow-x-hidden overflow-y-auto select-none cursor-crosshair"
+      style={{
+        backgroundImage: `url(${corkboardBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        backgroundColor: '#0c0805'
+      }}
+      className="relative min-h-screen w-screen text-slate-100 overflow-x-hidden overflow-y-auto select-none cursor-crosshair"
     >
       {/* Toast Notification */}
       <Toast toast={toast} onClose={closeToast} />
 
       {/* Rustic Wooden Board Header */}
       <header className="fixed top-0 left-0 right-0 z-30 pointer-events-none p-4 sm:p-6 flex items-center justify-between">
-        <div className="pointer-events-auto flex items-center gap-3 bg-[#1c0f08]/90 backdrop-blur-md px-4 py-2 rounded-lg border border-[#3e2417] shadow-xl text-amber-100">
-          <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
+        <div className="pointer-events-auto flex items-center gap-3 bg-[#1c0f08]/90 backdrop-blur-md px-4 py-2 rounded-lg border border-[#4a2a1a] shadow-2xl text-amber-100">
+          <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]" />
           <h1 className="text-xs sm:text-sm font-black tracking-widest uppercase font-serif text-amber-200">
             ANONİM DUVAR
           </h1>
@@ -132,9 +141,9 @@ function App() {
 
         {/* Minimal hint & Refresh */}
         <div className="pointer-events-auto flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-amber-200/90 bg-[#1c0f08]/90 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-[#3e2417] shadow-xl">
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-amber-100/90 bg-[#1c0f08]/90 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-[#4a2a1a] shadow-2xl">
             <MousePointerClick className="w-3.5 h-3.5 text-amber-400" />
-            <span>Tahtada boş bir yere tıkla ve not iğnele</span>
+            <span>Panoda boş bir yere tıkla ve not iğnele</span>
           </div>
 
           <button
@@ -143,8 +152,8 @@ function App() {
               fetchPosts();
             }}
             disabled={loading}
-            className="p-2 rounded-lg bg-[#1c0f08]/90 backdrop-blur-md border border-[#3e2417] text-amber-300 hover:text-white transition-all cursor-pointer shadow-xl disabled:opacity-50"
-            title="Tahtayı Yenile"
+            className="p-2 rounded-lg bg-[#1c0f08]/90 backdrop-blur-md border border-[#4a2a1a] text-amber-300 hover:text-white transition-all cursor-pointer shadow-2xl disabled:opacity-50"
+            title="Panoyu Yenile"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-amber-400' : ''}`} />
           </button>
@@ -161,14 +170,14 @@ function App() {
         />
       )}
 
-      {/* Wooden Board Canvas with Sticky Notes */}
+      {/* Corkboard Canvas with Sticky Notes */}
       <main className="relative min-h-screen w-full pt-20 pb-28 px-4 sm:px-8">
         {/* Empty state hint */}
         {posts.length === 0 && !loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-amber-200/60">
-            <div className="w-6 h-6 rounded-full bg-rose-600/60 mb-2 shadow-md" />
-            <p className="text-sm font-serif font-bold text-amber-100">Tahta Henüz Bomboş</p>
-            <p className="text-xs text-amber-300/60 mt-1">Herhangi bir yere tıkla ve ilk notu iğnele!</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-amber-950/80">
+            <div className="w-5 h-5 rounded-full bg-rose-600 mb-2 shadow-md" />
+            <p className="text-sm font-serif font-bold text-amber-950">Mantar Pano Henüz Bomboş</p>
+            <p className="text-xs text-amber-900/80 mt-1">Herhangi bir yere tıkla ve ilk post-it'i iğnele!</p>
           </div>
         )}
 
@@ -197,7 +206,7 @@ function App() {
             posY: 50
           });
         }}
-        className="fixed bottom-6 right-6 sm:hidden z-30 p-4 rounded-full bg-amber-600 hover:bg-amber-500 text-white shadow-2xl shadow-black/80 cursor-pointer active:scale-95 transition-all border border-amber-400/40"
+        className="fixed bottom-6 right-6 sm:hidden z-30 p-4 rounded-full bg-amber-700 hover:bg-amber-600 text-white shadow-2xl shadow-black/80 cursor-pointer active:scale-95 transition-all border border-amber-500/50"
         title="Not İğnele"
       >
         <Plus className="w-5 h-5" />
