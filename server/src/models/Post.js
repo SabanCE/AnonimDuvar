@@ -24,6 +24,10 @@ const postSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Beğeni sayısı sıfırdan küçük olamaz.']
     },
+    likedBy: {
+      type: [String],
+      default: []
+    },
     posX: {
       type: Number,
       default: null
@@ -50,6 +54,7 @@ const postSchema = new mongoose.Schema(
         delete ret._id;
         delete ret.__v;
         delete ret.authorToken; // Token asla dışarıya sızdırılmaz
+        delete ret.likedBy;     // Beğenen token listesi gizli tutulur
         return ret;
       }
     }

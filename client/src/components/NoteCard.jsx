@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart, Trash2 } from 'lucide-react';
 
 const STICKY_COLORS = {
@@ -65,16 +65,23 @@ export function NoteCard({ post, onLike, onDelete, isAbsolute = false }) {
   const [likes, setLikes] = useState(post.likes || 0);
   const [isLiking, setIsLiking] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [hasLiked, setHasLiked] = useState(false);
+  const [hasLiked, setHasLiked] = useState(Boolean(post.hasLiked));
+
+  // Sync if post prop changes
+  useEffect(() => {
+    setLikes(post.likes || 0);
+    setHasLiked(Boolean(post.hasLiked));
+  }, [post.likes, post.hasLiked]);
 
   const style = STICKY_COLORS[post.color] || STICKY_COLORS.yellow;
   const rotation = typeof post.rotation === 'number' ? post.rotation : 0;
 
   const handleLike = async (e) => {
     e.stopPropagation();
-    if (isLiking || isDeleting) return;
+    if (isLiking || isDeleting || hasLiked) return;
     setIsLiking(true);
 
+    // Optimistik güncelleme
     setLikes((prev) => prev + 1);
     setHasLiked(true);
 
@@ -142,7 +149,7 @@ export function NoteCard({ post, onLike, onDelete, isAbsolute = false }) {
         )}
       </div>
 
-      {/* Note Content (Looks like pen ink on real paper) */}
+      {/* Note Content */}
       <p className="font-sans text-xs sm:text-sm font-semibold leading-relaxed my-2 break-words whitespace-pre-wrap min-h-[52px]">
         "{post.content}"
       </p>
@@ -157,19 +164,20 @@ export function NoteCard({ post, onLike, onDelete, isAbsolute = false }) {
           )}
         </div>
 
+        {/* Like Button (1 like per user limit) */}
         <button
           onClick={handleLike}
-          disabled={isLiking}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+          disabled={isLiking || hasLiked}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
             hasLiked
-              ? 'bg-rose-500/15 text-rose-700 shadow-sm'
-              : 'bg-black/5 hover:bg-black/10 text-black/70 hover:text-black'
+              ? 'bg-rose-500/20 text-rose-700 cursor-default shadow-sm'
+              : 'bg-black/5 hover:bg-black/10 text-black/70 hover:text-black cursor-pointer'
           }`}
-          title="Beğen"
+          title={hasLiked ? 'Bu notu zaten beğendiniz' : 'Beğen'}
         >
           <Heart
             className={`w-3.5 h-3.5 transition-transform ${
-              hasLiked ? 'fill-rose-600 text-rose-600 scale-110' : 'text-black/60'
+              hasLiked ? 'fill-rose-600 text-rose-600' : 'text-black/60'
             } ${isLiking ? 'scale-125' : ''}`}
           />
           <span className="font-mono text-xs">{likes}</span>

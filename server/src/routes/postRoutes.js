@@ -14,6 +14,7 @@ let memoryPosts = [
     content: '🚀 Anonim Dijital Duvar hazır! İstediğin boş bir yere tıkla ve notunu bırak.',
     color: 'cyan',
     likes: 12,
+    likedBy: [],
     posX: 18,
     posY: 18,
     rotation: -2.5,
@@ -25,6 +26,7 @@ let memoryPosts = [
     content: '🔥 Boş alana tıklayıp doğrudan oraya not yapıştırabilirsin!',
     color: 'purple',
     likes: 8,
+    likedBy: [],
     posX: 52,
     posY: 32,
     rotation: 2.1,
@@ -36,6 +38,7 @@ let memoryPosts = [
     content: '☕ Gece kahvesi ve sessizlik.',
     color: 'yellow',
     likes: 24,
+    likedBy: [],
     posX: 30,
     posY: 60,
     rotation: -1.2,
@@ -48,7 +51,7 @@ const isDbConnected = () => mongoose.connection.readyState === 1;
 
 /**
  * @route   GET /api/posts
- * @desc    Duvara yazılmış son 30 notu getirir (istek sahibine isOwner bayrağını işaretler)
+ * @desc    Duvara yazılmış son 30 notu getirir (isOwner ve hasLiked bayraklarıyla)
  * @access  Public
  * @status  200 OK
  */
@@ -64,8 +67,9 @@ router.get('/', async (req, res, next) => {
 
       const sanitizedPosts = posts.map((post) => {
         const isOwner = Boolean(userToken && post.authorToken && post.authorToken === userToken);
-        const { authorToken, ...rest } = post;
-        return { ...rest, isOwner };
+        const hasLiked = Boolean(userToken && post.likedBy && post.likedBy.includes(userToken));
+        const { authorToken, likedBy, ...rest } = post;
+        return { ...rest, isOwner, hasLiked };
       });
 
       return res.status(200).json({
@@ -80,8 +84,9 @@ router.get('/', async (req, res, next) => {
     // DB bağlı değilse bellek içi veriyi dön
     const sanitizedMemory = memoryPosts.map((post) => {
       const isOwner = Boolean(userToken && post.authorToken && post.authorToken === userToken);
-      const { authorToken, ...rest } = post;
-      return { ...rest, isOwner };
+      const hasLiked = Boolean(userToken && post.likedBy && post.likedBy.includes(userToken));
+      const { authorToken, likedBy, ...rest } = post;
+      return { ...rest, isOwner, hasLiked };
     });
 
     return res.status(200).json({
@@ -107,7 +112,6 @@ router.post('/', postRateLimiter, async (req, res, next) => {
     const { content, color, posX, posY, rotation } = req.body;
     const authorToken = req.headers['x-author-token'] || req.body.authorToken || `anon-${Date.now()}`;
 
-    // Doğrulama: İçerik var mı?
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return res.status(400).json({
         error: 'BadRequest',
@@ -118,7 +122,6 @@ router.post('/', postRateLimiter, async (req, res, next) => {
 
     const trimmedContent = content.trim();
 
-    // Doğrulama: Karakter sayısı kontrolü (max 100)
     if (trimmedContent.length > 100) {
       return res.status(400).json({
         error: 'BadRequest',
@@ -137,6 +140,7 @@ router.post('/', postRateLimiter, async (req, res, next) => {
         content: trimmedContent,
         color: selectedColor,
         likes: 0,
+        likedBy: [],
         posX: finalPosX,
         posY: finalPosY,
         rotation: computedRotation,
@@ -145,6 +149,7 @@ router.post('/', postRateLimiter, async (req, res, next) => {
 
       const responseData = newPost.toJSON();
       responseData.isOwner = true;
+      responseData.hasLiked = false;
 
       return res.status(201).json({
         success: true,
@@ -159,6 +164,7 @@ router.post('/', postRateLimiter, async (req, res, next) => {
       content: trimmedContent,
       color: selectedColor,
       likes: 0,
+      likedBy: [],
       posX: finalPosX,
       posY: finalPosY,
       rotation: computedRotation,
@@ -167,8 +173,9 @@ router.post('/', postRateLimiter, async (req, res, next) => {
     };
     memoryPosts.unshift(newMemoryPost);
 
-    const { authorToken: _, ...clientPost } = newMemoryPost;
+    const { authorToken: _, likedBy: __, ...clientPost } = newMemoryPost;
     clientPost.isOwner = true;
+    clientPost.hasLiked = false;
 
     return res.status(201).json({
       success: true,
@@ -218,7 +225,6 @@ router.delete('/:id', async (req, res, next) => {
         });
       }
 
-      // Sahiplik kontrolü
       if (!post.authorToken || post.authorToken !== userToken) {
         return res.status(403).json({
           error: 'Forbidden',
@@ -269,13 +275,22 @@ router.delete('/:id', async (req, res, next) => {
 
 /**
  * @route   POST /api/posts/:id/like
- * @desc    Seçilen nota 1 beğeni ekler
+ * @desc    Seçilen nota 1 beğeni ekler (Her kullanıcı 1 kez beğenebilir)
  * @access  Public
- * @status  200 OK | 400 Bad Request | 404 Not Found | 429 Too Many Requests
+ * @status  200 OK | 400 Bad Request (Zaten beğenilmişse) | 404 Not Found | 429 Too Many Requests
  */
 router.post('/:id/like', likeRateLimiter, async (req, res, next) => {
   try {
     const { id } = req.params;
+    const userToken = req.headers['x-author-token'] || req.ip;
+
+    if (!userToken) {
+      return res.status(400).json({
+        error: 'BadRequest',
+        status: 400,
+        message: 'Beğeni yapabilmek için kullanıcı kimliği belirlenemedi.'
+      });
+    }
 
     if (isDbConnected()) {
       if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -286,13 +301,8 @@ router.post('/:id/like', likeRateLimiter, async (req, res, next) => {
         });
       }
 
-      const updatedPost = await Post.findByIdAndUpdate(
-        id,
-        { $inc: { likes: 1 } },
-        { new: true, runValidators: true }
-      );
-
-      if (!updatedPost) {
+      const existingPost = await Post.findById(id);
+      if (!existingPost) {
         return res.status(404).json({
           error: 'NotFound',
           status: 404,
@@ -300,15 +310,35 @@ router.post('/:id/like', likeRateLimiter, async (req, res, next) => {
         });
       }
 
+      // KONTROL: Kullanıcı bu kartı daha önce beğendi mi?
+      if (existingPost.likedBy && existingPost.likedBy.includes(userToken)) {
+        return res.status(400).json({
+          error: 'AlreadyLiked',
+          status: 400,
+          message: 'Bu notu zaten beğendiniz! Her karta yalnızca 1 kez beğeni bırakabilirsiniz.'
+        });
+      }
+
+      // 1 Beğeni artır ve listeye ekle
+      const updatedPost = await Post.findByIdAndUpdate(
+        id,
+        {
+          $inc: { likes: 1 },
+          $addToSet: { likedBy: userToken }
+        },
+        { new: true, runValidators: true }
+      );
+
       return res.status(200).json({
         success: true,
         status: 200,
         message: 'Beğenildi! ❤️',
         likes: updatedPost.likes,
-        data: updatedPost
+        hasLiked: true
       });
     }
 
+    // DB bağlı değilse bellek içi kontrol
     const found = memoryPosts.find((p) => p.id === id);
     if (!found) {
       return res.status(404).json({
@@ -318,6 +348,18 @@ router.post('/:id/like', likeRateLimiter, async (req, res, next) => {
       });
     }
 
+    if (!found.likedBy) found.likedBy = [];
+
+    // KONTROL: Kullanıcı bu kartı daha önce beğendi mi?
+    if (found.likedBy.includes(userToken)) {
+      return res.status(400).json({
+        error: 'AlreadyLiked',
+        status: 400,
+        message: 'Bu notu zaten beğendiniz! Her karta yalnızca 1 kez beğeni bırakabilirsiniz.'
+      });
+    }
+
+    found.likedBy.push(userToken);
     found.likes = (found.likes || 0) + 1;
 
     return res.status(200).json({
@@ -325,7 +367,7 @@ router.post('/:id/like', likeRateLimiter, async (req, res, next) => {
       status: 200,
       message: 'Beğenildi! ❤️',
       likes: found.likes,
-      data: found
+      hasLiked: true
     });
   } catch (error) {
     next(error);
