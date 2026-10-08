@@ -23,6 +23,18 @@ const postSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: [0, 'Beğeni sayısı sıfırdan küçük olamaz.']
+    },
+    posX: {
+      type: Number,
+      default: null
+    },
+    posY: {
+      type: Number,
+      default: null
+    },
+    rotation: {
+      type: Number,
+      default: 0
     }
   },
   {

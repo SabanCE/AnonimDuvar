@@ -1,126 +1,140 @@
 import { useState } from 'react';
-import { Heart, Pin, Clock } from 'lucide-react';
+import { Heart, Pin } from 'lucide-react';
 
 const COLOR_VARIANTS = {
   yellow: {
-    border: 'border-amber-400/60 hover:border-amber-300',
-    glow: 'shadow-[0_0_15px_rgba(251,191,36,0.15)] hover:shadow-[0_0_25px_rgba(251,191,36,0.25)]',
+    border: 'border-amber-400/50 hover:border-amber-300',
+    glow: 'shadow-[0_4px_20px_rgba(251,191,36,0.12)] hover:shadow-[0_8px_30px_rgba(251,191,36,0.3)]',
+    bg: 'bg-gradient-to-b from-amber-500/10 via-slate-900/80 to-slate-950/90',
     pin: 'text-amber-400',
-    tag: 'bg-amber-400/10 text-amber-300 border-amber-400/20'
+    accent: 'text-amber-300'
   },
   cyan: {
-    border: 'border-cyan-400/60 hover:border-cyan-300',
-    glow: 'shadow-[0_0_15px_rgba(34,211,238,0.15)] hover:shadow-[0_0_25px_rgba(34,211,238,0.25)]',
+    border: 'border-cyan-400/50 hover:border-cyan-300',
+    glow: 'shadow-[0_4px_20px_rgba(34,211,238,0.12)] hover:shadow-[0_8px_30px_rgba(34,211,238,0.3)]',
+    bg: 'bg-gradient-to-b from-cyan-500/10 via-slate-900/80 to-slate-950/90',
     pin: 'text-cyan-400',
-    tag: 'bg-cyan-400/10 text-cyan-300 border-cyan-400/20'
+    accent: 'text-cyan-300'
   },
   pink: {
-    border: 'border-pink-400/60 hover:border-pink-300',
-    glow: 'shadow-[0_0_15px_rgba(244,114,182,0.15)] hover:shadow-[0_0_25px_rgba(244,114,182,0.25)]',
+    border: 'border-pink-400/50 hover:border-pink-300',
+    glow: 'shadow-[0_4px_20px_rgba(244,114,182,0.12)] hover:shadow-[0_8px_30px_rgba(244,114,182,0.3)]',
+    bg: 'bg-gradient-to-b from-pink-500/10 via-slate-900/80 to-slate-950/90',
     pin: 'text-pink-400',
-    tag: 'bg-pink-400/10 text-pink-300 border-pink-400/20'
+    accent: 'text-pink-300'
   },
   purple: {
-    border: 'border-purple-400/60 hover:border-purple-300',
-    glow: 'shadow-[0_0_15px_rgba(192,132,252,0.15)] hover:shadow-[0_0_25px_rgba(192,132,252,0.25)]',
+    border: 'border-purple-400/50 hover:border-purple-300',
+    glow: 'shadow-[0_4px_20px_rgba(192,132,252,0.12)] hover:shadow-[0_8px_30px_rgba(192,132,252,0.3)]',
+    bg: 'bg-gradient-to-b from-purple-500/10 via-slate-900/80 to-slate-950/90',
     pin: 'text-purple-400',
-    tag: 'bg-purple-400/10 text-purple-300 border-purple-400/20'
+    accent: 'text-purple-300'
   },
   emerald: {
-    border: 'border-emerald-400/60 hover:border-emerald-300',
-    glow: 'shadow-[0_0_15px_rgba(52,211,153,0.15)] hover:shadow-[0_0_25px_rgba(52,211,153,0.25)]',
+    border: 'border-emerald-400/50 hover:border-emerald-300',
+    glow: 'shadow-[0_4px_20px_rgba(52,211,153,0.12)] hover:shadow-[0_8px_30px_rgba(52,211,153,0.3)]',
+    bg: 'bg-gradient-to-b from-emerald-500/10 via-slate-900/80 to-slate-950/90',
     pin: 'text-emerald-400',
-    tag: 'bg-emerald-400/10 text-emerald-300 border-emerald-400/20'
+    accent: 'text-emerald-300'
   },
   amber: {
-    border: 'border-orange-400/60 hover:border-orange-300',
-    glow: 'shadow-[0_0_15px_rgba(251,146,60,0.15)] hover:shadow-[0_0_25px_rgba(251,146,60,0.25)]',
+    border: 'border-orange-400/50 hover:border-orange-300',
+    glow: 'shadow-[0_4px_20px_rgba(251,146,60,0.12)] hover:shadow-[0_8px_30px_rgba(251,146,60,0.3)]',
+    bg: 'bg-gradient-to-b from-orange-500/10 via-slate-900/80 to-slate-950/90',
     pin: 'text-orange-400',
-    tag: 'bg-orange-400/10 text-orange-300 border-orange-400/20'
+    accent: 'text-orange-300'
   }
 };
 
 function formatTimeAgo(dateString) {
   if (!dateString) return 'Az önce';
-  const now = new Date();
-  const date = new Date(dateString);
-  const diffInSeconds = Math.floor((now - date) / 1000);
-
-  if (diffInSeconds < 60) return 'Az önce';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} dk önce`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} sa önce`;
-  return `${Math.floor(diffInSeconds / 86400)} gün önce`;
+  const diff = Math.floor((new Date() - new Date(dateString)) / 1000);
+  if (diff < 60) return 'Az önce';
+  if (diff < 3600) return `${Math.floor(diff / 60)}d`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}s`;
+  return `${Math.floor(diff / 86400)}g`;
 }
 
-export function NoteCard({ post, onLike }) {
+export function NoteCard({ post, onLike, isAbsolute = false }) {
   const [likes, setLikes] = useState(post.likes || 0);
   const [isLiking, setIsLiking] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
 
   const style = COLOR_VARIANTS[post.color] || COLOR_VARIANTS.yellow;
+  const rotation = typeof post.rotation === 'number' ? post.rotation : 0;
 
-  const handleLike = async () => {
+  const handleLike = async (e) => {
+    e.stopPropagation();
     if (isLiking) return;
     setIsLiking(true);
 
-    // Optimistik güncelleme
     setLikes((prev) => prev + 1);
     setHasLiked(true);
 
     const result = await onLike(post.id || post._id);
     if (!result?.success) {
-      // Başarısız olursa geri al
       setLikes((prev) => Math.max(0, prev - 1));
       setHasLiked(false);
     } else if (result.likes !== undefined) {
       setLikes(result.likes);
     }
 
-    setTimeout(() => setIsLiking(false), 400);
+    setTimeout(() => setIsLiking(false), 300);
   };
+
+  // Absolute positioning if coordinates exist and isAbsolute mode is active
+  const cardStyle = isAbsolute && typeof post.posX === 'number' && typeof post.posY === 'number'
+    ? {
+        position: 'absolute',
+        left: `${post.posX}%`,
+        top: `${post.posY}%`,
+        transform: `translate(-50%, -50%) rotate(${rotation}deg)`
+      }
+    : {
+        transform: `rotate(${rotation}deg)`
+      };
 
   return (
     <div
-      className={`relative flex flex-col justify-between p-5 rounded-2xl border bg-slate-900/70 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 ${style.border} ${style.glow}`}
+      onClick={(e) => e.stopPropagation()}
+      style={cardStyle}
+      className={`group w-[230px] sm:w-[250px] p-4 rounded-2xl border backdrop-blur-md transition-all duration-300 hover:rotate-0 hover:scale-105 hover:z-40 cursor-default select-none ${style.bg} ${style.border} ${style.glow}`}
     >
-      {/* Top Header: Pin & Time */}
-      <div className="flex items-center justify-between mb-3">
-        <Pin className={`w-4 h-4 ${style.pin} rotate-45`} />
-        <div className="flex items-center gap-1 text-[11px] text-slate-400">
-          <Clock className="w-3 h-3" />
-          <span>{formatTimeAgo(post.createdAt)}</span>
-        </div>
+      {/* Top Pin & Time */}
+      <div className="flex items-center justify-between mb-2 pointer-events-none">
+        <Pin className={`w-3.5 h-3.5 ${style.pin} rotate-45 opacity-80 group-hover:opacity-100 transition-opacity`} />
+        <span className="text-[10px] text-slate-500 font-mono">
+          {formatTimeAgo(post.createdAt)}
+        </span>
       </div>
 
-      {/* Note Content */}
-      <div className="flex-1 my-2">
-        <p className="text-slate-100 text-sm md:text-base font-medium leading-relaxed break-words whitespace-pre-wrap font-sans">
-          "{post.content}"
-        </p>
-      </div>
+      {/* Content */}
+      <p className="text-slate-100 text-xs sm:text-sm font-medium leading-relaxed my-2 break-words whitespace-pre-wrap min-h-[48px]">
+        "{post.content}"
+      </p>
 
-      {/* Footer: Color Tag & Like Button */}
-      <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
-        <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded-full border ${style.tag}`}>
-          #{post.color || 'anonim'}
+      {/* Bottom Like & Color indicator */}
+      <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between">
+        <span className={`text-[10px] uppercase font-mono tracking-wider ${style.accent} opacity-80`}>
+          #{post.color || 'not'}
         </span>
 
         <button
           onClick={handleLike}
           disabled={isLiking}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
             hasLiked
-              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
-              : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60 hover:text-white'
+              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/50 shadow-[0_0_12px_rgba(244,63,94,0.3)]'
+              : 'bg-slate-800/70 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60'
           }`}
-          title="Bu notu beğen"
+          title="Beğen"
         >
           <Heart
-            className={`w-3.5 h-3.5 transition-transform ${
+            className={`w-3 h-3 transition-transform ${
               hasLiked ? 'fill-rose-500 text-rose-500 scale-110' : 'text-slate-400'
             } ${isLiking ? 'scale-125' : ''}`}
           />
-          <span className="font-mono">{likes}</span>
+          <span className="font-mono text-[11px]">{likes}</span>
         </button>
       </div>
     </div>

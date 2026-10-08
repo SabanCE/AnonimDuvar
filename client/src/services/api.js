@@ -30,9 +30,9 @@ export const postsApi = {
   },
 
   // POST /api/posts (201 Created | 400 Bad Request | 429 Too Many Requests)
-  async createPost(content, color) {
+  async createPost(content, color, posX, posY, rotation) {
     try {
-      const response = await api.post('/posts', { content, color });
+      const response = await api.post('/posts', { content, color, posX, posY, rotation });
       return {
         success: true,
         status: response.status,
