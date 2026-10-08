@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
+import { connectDB } from './config/db.js';
 
 dotenv.config();
 
@@ -18,8 +20,10 @@ app.use(express.json());
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
   res.status(200).json({
     status: 'ok',
+    database: dbStatus,
     message: 'Anonim Dijital Duvar API çalışıyor.',
     timestamp: new Date().toISOString()
   });
@@ -42,8 +46,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Anonim Duvar API http://localhost:${PORT} üzerinde çalışıyor`);
-});
+// Start server and connect DB
+const startServer = async () => {
+  await connectDB();
+  app.listen(PORT, () => {
+    console.log(`🚀 Anonim Duvar API http://localhost:${PORT} üzerinde çalışıyor`);
+  });
+};
+
+startServer();
 
 export default app;
