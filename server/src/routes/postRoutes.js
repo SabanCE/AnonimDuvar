@@ -7,45 +7,8 @@ const router = express.Router();
 
 const getRandomRotation = () => Number((Math.random() * 8 - 4).toFixed(1));
 
-// Bellek içi yedek depo
-let memoryPosts = [
-  {
-    id: 'mock-1',
-    content: '🚀 Anonim Dijital Duvar hazır! İstediğin boş bir yere tıkla ve notunu bırak.',
-    color: 'cyan',
-    likes: 12,
-    likedBy: [],
-    posX: 18,
-    posY: 18,
-    rotation: -2.5,
-    authorToken: 'system-demo-1',
-    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString()
-  },
-  {
-    id: 'mock-2',
-    content: '🔥 Boş alana tıklayıp doğrudan oraya not yapıştırabilirsin!',
-    color: 'purple',
-    likes: 8,
-    likedBy: [],
-    posX: 52,
-    posY: 32,
-    rotation: 2.1,
-    authorToken: 'system-demo-2',
-    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString()
-  },
-  {
-    id: 'mock-3',
-    content: '☕ Gece kahvesi ve sessizlik.',
-    color: 'yellow',
-    likes: 24,
-    likedBy: [],
-    posX: 30,
-    posY: 60,
-    rotation: -1.2,
-    authorToken: 'system-demo-3',
-    createdAt: new Date(Date.now() - 1000 * 60 * 2).toISOString()
-  }
-];
+// Bellek içi yedek depo (Varsayılan olarak boş başlar)
+let memoryPosts = [];
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
