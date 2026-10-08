@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart, Pin } from 'lucide-react';
+import { Heart, Pin, Trash2 } from 'lucide-react';
 
 const COLOR_VARIANTS = {
   yellow: {
@@ -55,9 +55,10 @@ function formatTimeAgo(dateString) {
   return `${Math.floor(diff / 86400)}g`;
 }
 
-export function NoteCard({ post, onLike, isAbsolute = false }) {
+export function NoteCard({ post, onLike, onDelete, isAbsolute = false }) {
   const [likes, setLikes] = useState(post.likes || 0);
   const [isLiking, setIsLiking] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
 
   const style = COLOR_VARIANTS[post.color] || COLOR_VARIANTS.yellow;
@@ -65,7 +66,7 @@ export function NoteCard({ post, onLike, isAbsolute = false }) {
 
   const handleLike = async (e) => {
     e.stopPropagation();
-    if (isLiking) return;
+    if (isLiking || isDeleting) return;
     setIsLiking(true);
 
     setLikes((prev) => prev + 1);
@@ -82,7 +83,15 @@ export function NoteCard({ post, onLike, isAbsolute = false }) {
     setTimeout(() => setIsLiking(false), 300);
   };
 
-  // Absolute positioning if coordinates exist and isAbsolute mode is active
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    if (isDeleting) return;
+    if (window.confirm('Bu notunu duvardan silmek istediğine emin misin?')) {
+      setIsDeleting(true);
+      await onDelete(post.id || post._id);
+    }
+  };
+
   const cardStyle = isAbsolute && typeof post.posX === 'number' && typeof post.posY === 'number'
     ? {
         position: 'absolute',
@@ -98,14 +107,30 @@ export function NoteCard({ post, onLike, isAbsolute = false }) {
     <div
       onClick={(e) => e.stopPropagation()}
       style={cardStyle}
-      className={`group w-[230px] sm:w-[250px] p-4 rounded-2xl border backdrop-blur-md transition-all duration-300 hover:rotate-0 hover:scale-105 hover:z-40 cursor-default select-none ${style.bg} ${style.border} ${style.glow}`}
+      className={`group relative w-[230px] sm:w-[250px] p-4 rounded-2xl border backdrop-blur-md transition-all duration-300 hover:rotate-0 hover:scale-105 hover:z-40 cursor-default select-none ${style.bg} ${style.border} ${style.glow} ${
+        isDeleting ? 'opacity-40 pointer-events-none scale-95' : ''
+      }`}
     >
-      {/* Top Pin & Time */}
-      <div className="flex items-center justify-between mb-2 pointer-events-none">
-        <Pin className={`w-3.5 h-3.5 ${style.pin} rotate-45 opacity-80 group-hover:opacity-100 transition-opacity`} />
-        <span className="text-[10px] text-slate-500 font-mono">
-          {formatTimeAgo(post.createdAt)}
-        </span>
+      {/* Top Pin, Time & Delete button */}
+      <div className="flex items-center justify-between mb-2">
+        <Pin className={`w-3.5 h-3.5 ${style.pin} rotate-45 opacity-80 group-hover:opacity-100 transition-opacity pointer-events-none`} />
+        
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] text-slate-500 font-mono">
+            {formatTimeAgo(post.createdAt)}
+          </span>
+
+          {/* Sadece bu notu oluşturan kişiye silme butonu gösterilir */}
+          {post.isOwner && (
+            <button
+              onClick={handleDelete}
+              className="p-1 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+              title="Notumu Sil (DELETE 200 / 403)"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -113,11 +138,18 @@ export function NoteCard({ post, onLike, isAbsolute = false }) {
         "{post.content}"
       </p>
 
-      {/* Bottom Like & Color indicator */}
+      {/* Bottom Like & Color tag */}
       <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between">
-        <span className={`text-[10px] uppercase font-mono tracking-wider ${style.accent} opacity-80`}>
-          #{post.color || 'not'}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={`text-[10px] uppercase font-mono tracking-wider ${style.accent} opacity-80`}>
+            #{post.color || 'not'}
+          </span>
+          {post.isOwner && (
+            <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950/60 text-cyan-300 border border-cyan-500/30 font-mono">
+              senin
+            </span>
+          )}
+        </div>
 
         <button
           onClick={handleLike}

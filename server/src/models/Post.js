@@ -35,6 +35,10 @@ const postSchema = new mongoose.Schema(
     rotation: {
       type: Number,
       default: 0
+    },
+    authorToken: {
+      type: String,
+      default: null
     }
   },
   {
@@ -45,6 +49,7 @@ const postSchema = new mongoose.Schema(
         ret.id = ret._id;
         delete ret._id;
         delete ret.__v;
+        delete ret.authorToken; // Token asla dışarıya sızdırılmaz
         return ret;
       }
     }

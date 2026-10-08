@@ -5,7 +5,6 @@ import { postRateLimiter, likeRateLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-// Rastgele hafif açı oluşturucu (-4 ile 4 derece arası)
 const getRandomRotation = () => Number((Math.random() * 8 - 4).toFixed(1));
 
 // Bellek içi yedek depo
@@ -18,6 +17,7 @@ let memoryPosts = [
     posX: 18,
     posY: 18,
     rotation: -2.5,
+    authorToken: 'system-demo-1',
     createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString()
   },
   {
@@ -28,6 +28,7 @@ let memoryPosts = [
     posX: 52,
     posY: 32,
     rotation: 2.1,
+    authorToken: 'system-demo-2',
     createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString()
   },
   {
@@ -38,6 +39,7 @@ let memoryPosts = [
     posX: 30,
     posY: 60,
     rotation: -1.2,
+    authorToken: 'system-demo-3',
     createdAt: new Date(Date.now() - 1000 * 60 * 2).toISOString()
   }
 ];
@@ -46,33 +48,48 @@ const isDbConnected = () => mongoose.connection.readyState === 1;
 
 /**
  * @route   GET /api/posts
- * @desc    Duvara yazılmış son 30 notu getirir
+ * @desc    Duvara yazılmış son 30 notu getirir (istek sahibine isOwner bayrağını işaretler)
  * @access  Public
  * @status  200 OK
  */
 router.get('/', async (req, res, next) => {
   try {
+    const userToken = req.headers['x-author-token'];
+
     if (isDbConnected()) {
       const posts = await Post.find()
         .sort({ createdAt: -1 })
         .limit(30)
         .lean({ virtuals: true });
 
+      const sanitizedPosts = posts.map((post) => {
+        const isOwner = Boolean(userToken && post.authorToken && post.authorToken === userToken);
+        const { authorToken, ...rest } = post;
+        return { ...rest, isOwner };
+      });
+
       return res.status(200).json({
         success: true,
         status: 200,
         source: 'database',
-        count: posts.length,
-        data: posts
+        count: sanitizedPosts.length,
+        data: sanitizedPosts
       });
     }
+
+    // DB bağlı değilse bellek içi veriyi dön
+    const sanitizedMemory = memoryPosts.map((post) => {
+      const isOwner = Boolean(userToken && post.authorToken && post.authorToken === userToken);
+      const { authorToken, ...rest } = post;
+      return { ...rest, isOwner };
+    });
 
     return res.status(200).json({
       success: true,
       status: 200,
       source: 'memory-fallback',
-      count: memoryPosts.length,
-      data: memoryPosts
+      count: sanitizedMemory.length,
+      data: sanitizedMemory
     });
   } catch (error) {
     next(error);
@@ -88,6 +105,7 @@ router.get('/', async (req, res, next) => {
 router.post('/', postRateLimiter, async (req, res, next) => {
   try {
     const { content, color, posX, posY, rotation } = req.body;
+    const authorToken = req.headers['x-author-token'] || req.body.authorToken || `anon-${Date.now()}`;
 
     // Doğrulama: İçerik var mı?
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -121,14 +139,18 @@ router.post('/', postRateLimiter, async (req, res, next) => {
         likes: 0,
         posX: finalPosX,
         posY: finalPosY,
-        rotation: computedRotation
+        rotation: computedRotation,
+        authorToken
       });
+
+      const responseData = newPost.toJSON();
+      responseData.isOwner = true;
 
       return res.status(201).json({
         success: true,
         status: 201,
         message: 'Notunuz duvara yapıştırıldı! 📌',
-        data: newPost
+        data: responseData
       });
     }
 
@@ -140,15 +162,105 @@ router.post('/', postRateLimiter, async (req, res, next) => {
       posX: finalPosX,
       posY: finalPosY,
       rotation: computedRotation,
+      authorToken,
       createdAt: new Date().toISOString()
     };
     memoryPosts.unshift(newMemoryPost);
+
+    const { authorToken: _, ...clientPost } = newMemoryPost;
+    clientPost.isOwner = true;
 
     return res.status(201).json({
       success: true,
       status: 201,
       message: 'Notunuz duvara yapıştırıldı! 📌',
-      data: newMemoryPost
+      data: clientPost
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @route   DELETE /api/posts/:id
+ * @desc    Notu siler (YALNIZCA oluşturan kişi silebilir)
+ * @access  Public (Author Token korumalı)
+ * @status  200 OK | 400 Bad Request | 401 Unauthorized | 403 Forbidden | 404 Not Found
+ */
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userToken = req.headers['x-author-token'];
+
+    if (!userToken) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        status: 401,
+        message: 'Bu işlemi yapabilmek için yazar tokeni gereklidir. (401 Unauthorized)'
+      });
+    }
+
+    if (isDbConnected()) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          error: 'BadRequest',
+          status: 400,
+          message: 'Geçersiz not ID formatı.'
+        });
+      }
+
+      const post = await Post.findById(id);
+      if (!post) {
+        return res.status(404).json({
+          error: 'NotFound',
+          status: 404,
+          message: 'Silinmek istenen not bulunamadı.'
+        });
+      }
+
+      // Sahiplik kontrolü
+      if (!post.authorToken || post.authorToken !== userToken) {
+        return res.status(403).json({
+          error: 'Forbidden',
+          status: 403,
+          message: 'Bu notu sadece oluşturan kişi silebilir! (403 Forbidden)'
+        });
+      }
+
+      await Post.findByIdAndDelete(id);
+
+      return res.status(200).json({
+        success: true,
+        status: 200,
+        message: 'Notunuz başarıyla silindi. 🗑️'
+      });
+    }
+
+    // DB bağlı değilse bellekten silme
+    const postIndex = memoryPosts.findIndex((p) => p.id === id);
+    if (postIndex === -1) {
+      return res.status(404).json({
+        error: 'NotFound',
+        status: 404,
+        message: 'Silinmek istenen not bulunamadı.'
+      });
+    }
+
+    const memoryPost = memoryPosts[postIndex];
+    if (!memoryPost.authorToken || memoryPost.authorToken !== userToken) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        status: 403,
+        message: 'Bu notu sadece oluşturan kişi silebilir! (403 Forbidden)'
+      });
+    }
+
+    memoryPosts.splice(postIndex, 1);
+
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Notunuz başarıyla silindi. 🗑️'
     });
   } catch (error) {
     next(error);

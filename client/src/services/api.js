@@ -1,5 +1,15 @@
 import axios from 'axios';
 
+// Get or generate an anonymous author token for this browser
+const getAuthorToken = () => {
+  let token = localStorage.getItem('anonim_author_token');
+  if (!token) {
+    token = 'author-' + Math.random().toString(36).substring(2, 15) + '-' + Date.now().toString(36);
+    localStorage.setItem('anonim_author_token', token);
+  }
+  return token;
+};
+
 // Vite proxy /api to backend in dev, or relative in production
 const api = axios.create({
   baseURL: '/api',
@@ -7,6 +17,12 @@ const api = axios.create({
     'Content-Type': 'application/json'
   },
   timeout: 10000
+});
+
+// Attach author token to all outgoing requests
+api.interceptors.request.use((config) => {
+  config.headers['x-author-token'] = getAuthorToken();
+  return config;
 });
 
 // Posts API endpoints
@@ -44,6 +60,24 @@ export const postsApi = {
         success: false,
         status: error.response?.status || 500,
         message: error.response?.data?.message || 'Not eklenirken beklenmeyen bir hata oluştu.'
+      };
+    }
+  },
+
+  // DELETE /api/posts/:id (200 OK | 403 Forbidden | 404 Not Found)
+  async deletePost(id) {
+    try {
+      const response = await api.delete(`/posts/${id}`);
+      return {
+        success: true,
+        status: response.status,
+        message: response.data.message || 'Not silindi.'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status || 500,
+        message: error.response?.data?.message || 'Not silinirken hata oluştu.'
       };
     }
   },

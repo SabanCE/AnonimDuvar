@@ -42,11 +42,9 @@ function App() {
       return;
     }
 
-    const rect = wallRef.current?.getBoundingClientRect() || { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
     const clickX = e.clientX;
     const clickY = e.clientY;
 
-    // Relative percentage for responsive positioning
     const posX = Math.max(12, Math.min(88, Number(((clickX / window.innerWidth) * 100).toFixed(1))));
     const posY = Math.max(15, Math.min(85, Number(((clickY / window.innerHeight) * 100).toFixed(1))));
 
@@ -81,6 +79,22 @@ function App() {
         triggerToast('rate-limit', result.message, 429);
       } else if (result.status === 400) {
         triggerToast('bad-request', result.message, 400);
+      } else {
+        triggerToast('error', result.message, result.status);
+      }
+    }
+  };
+
+  // Handle post delete (Only author can delete)
+  const handleDeletePost = async (id) => {
+    const result = await postsApi.deletePost(id);
+
+    if (result.success) {
+      triggerToast('success', 'Notun duvardan silindi. 🗑️', 200);
+      setPosts((prev) => prev.filter((p) => (p.id || p._id) !== id));
+    } else {
+      if (result.status === 403) {
+        triggerToast('warning', result.message, 403);
       } else {
         triggerToast('error', result.message, result.status);
       }
@@ -168,20 +182,21 @@ function App() {
           </div>
         )}
 
-        {/* Desktop/Tablet: Organic Free-Flowing Wall Grid */}
+        {/* Free-Flowing Wall Grid */}
         <div className="flex flex-wrap items-start justify-center gap-6 sm:gap-8 max-w-7xl mx-auto py-8">
           {posts.map((post) => (
             <NoteCard
               key={post.id || post._id}
               post={post}
               onLike={handleLikePost}
+              onDelete={handleDeletePost}
               isAbsolute={false}
             />
           ))}
         </div>
       </main>
 
-      {/* Floating Action Button (for mobile users or quick note adding) */}
+      {/* Floating Action Button (for mobile users) */}
       <button
         onClick={(e) => {
           e.stopPropagation();
