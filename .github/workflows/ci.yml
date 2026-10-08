@@ -1,4 +1,4 @@
-name: CI / Build & Lint Check
+name: CI / Build & Test Check
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   server-check:
-    name: Backend Syntax Check
+    name: Backend Test & Syntax Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -34,6 +34,13 @@ jobs:
           node --check src/models/Post.js
           node --check src/routes/postRoutes.js
           node --check src/middleware/rateLimiter.js
+
+      - name: Run Automated API Tests (200, 201, 400, 403)
+        env:
+          NODE_ENV: test
+        run: |
+          cd server
+          npm test
 
   client-check:
     name: Frontend Build Check

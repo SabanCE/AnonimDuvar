@@ -89,6 +89,9 @@ const startServer = async () => {
   });
 };
 
-startServer();
+// Only listen when not running in test mode
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
 
 export default app;
