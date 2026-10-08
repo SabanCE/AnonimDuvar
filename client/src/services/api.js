@@ -10,13 +10,15 @@ const getAuthorToken = () => {
   return token;
 };
 
-// Vite proxy /api to backend in dev, or relative in production
+// Use VITE_API_URL in production (e.g. Render), fallback to local /api proxy in development
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 10000
+  timeout: 15000
 });
 
 // Attach author token to all outgoing requests

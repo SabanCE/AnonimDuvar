@@ -8,7 +8,7 @@ on:
 
 jobs:
   server-check:
-    name: Backend Check
+    name: Backend Syntax Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -26,10 +26,14 @@ jobs:
           cd server
           npm ci
 
-      - name: Check Server Syntax / Lint
+      - name: Check Server Syntax
         run: |
           cd server
           node --check src/server.js
+          node --check src/config/db.js
+          node --check src/models/Post.js
+          node --check src/routes/postRoutes.js
+          node --check src/middleware/rateLimiter.js
 
   client-check:
     name: Frontend Build Check

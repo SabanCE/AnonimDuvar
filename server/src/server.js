@@ -11,15 +11,34 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
-// Trust proxy for rate limiting (especially useful on Render, Vercel, Heroku, etc.)
+// Trust proxy for rate limiting (especially on Render, Railway, Vercel, Heroku)
 app.set('trust proxy', 1);
 
-// Middleware
+// Flexible CORS setup for production (Vercel) & development (localhost)
+const allowedOrigins = [
+  CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: CLIENT_URL,
-  methods: ['GET', 'POST'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    // Allow defined origins or any vercel.app deployment preview
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+
+    // Default allow for public anonymous API
+    return callback(null, true);
+  },
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-author-token'],
   credentials: true
 }));
+
 app.use(express.json());
 
 // Health check endpoint
@@ -30,6 +49,15 @@ app.get('/api/health', (req, res) => {
     database: dbStatus,
     message: 'Anonim Dijital Duvar API çalışıyor.',
     timestamp: new Date().toISOString()
+  });
+});
+
+// Root welcome endpoint for Render status
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'Anonim Dijital Duvar API - Render Deployment Active 🚀',
+    health: '/api/health',
+    posts: '/api/posts'
   });
 });
 
