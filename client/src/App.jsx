@@ -114,16 +114,20 @@ function App() {
     <div
       ref={wallRef}
       onClick={handleWallClick}
-      style={{
-        backgroundImage: `url(${corkboardBg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed',
-        backgroundColor: '#0c0805'
-      }}
-      className="relative min-h-screen w-screen text-slate-100 overflow-x-hidden overflow-y-auto select-none cursor-crosshair"
+      className="relative min-h-screen w-full text-slate-100 select-none cursor-crosshair overflow-x-hidden"
     >
+      {/* 100% Fullscreen Fixed Corkboard Background Layer */}
+      <div
+        className="fixed inset-0 z-0 pointer-events-none"
+        style={{
+          backgroundImage: `url(${corkboardBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
+          backgroundRepeat: 'no-repeat',
+          backgroundColor: '#120a06'
+        }}
+      />
+
       {/* Toast Notification */}
       <Toast toast={toast} onClose={closeToast} />
 
@@ -170,8 +174,8 @@ function App() {
         />
       )}
 
-      {/* Corkboard Canvas with Sticky Notes */}
-      <main className="relative min-h-screen w-full pt-20 pb-28 px-4 sm:px-8">
+      {/* Content Layer (Over the fixed corkboard) */}
+      <main className="relative z-10 min-h-screen w-full pt-20 pb-28 px-4 sm:px-8">
         {/* Empty state hint */}
         {posts.length === 0 && !loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-amber-950/80">
