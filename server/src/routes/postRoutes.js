@@ -2,15 +2,14 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { Post, VALID_COLORS } from '../models/Post.js';
 import { postRateLimiter, likeRateLimiter } from '../middleware/rateLimiter.js';
+import { ensureDBConnected } from '../config/db.js';
 
 const router = express.Router();
 
 const getRandomRotation = () => Number((Math.random() * 8 - 4).toFixed(1));
 
-// Bellek içi yedek depo (Varsayılan olarak boş başlar)
+// Bellek içi yedek depo (Yalnızca MONGODB_URI hiç tanımlı değilse yerel testler için)
 let memoryPosts = [];
-
-const isDbConnected = () => mongoose.connection.readyState === 1;
 
 /**
  * @route   GET /api/posts
@@ -21,8 +20,9 @@ const isDbConnected = () => mongoose.connection.readyState === 1;
 router.get('/', async (req, res, next) => {
   try {
     const userToken = req.headers['x-author-token'];
+    const dbActive = await ensureDBConnected();
 
-    if (isDbConnected()) {
+    if (dbActive) {
       const posts = await Post.find()
         .sort({ createdAt: -1 })
         .limit(30)
@@ -44,7 +44,7 @@ router.get('/', async (req, res, next) => {
       });
     }
 
-    // DB bağlı değilse bellek içi veriyi dön
+    // Yalnızca DB bağlantısı kurulamamışsa bellek içi veriyi dön
     const sanitizedMemory = memoryPosts.map((post) => {
       const isOwner = Boolean(userToken && post.authorToken && post.authorToken === userToken);
       const hasLiked = Boolean(userToken && post.likedBy && post.likedBy.includes(userToken));
@@ -98,7 +98,9 @@ router.post('/', postRateLimiter, async (req, res, next) => {
     const finalPosX = typeof posX === 'number' ? posX : Math.floor(Math.random() * 70 + 10);
     const finalPosY = typeof posY === 'number' ? posY : Math.floor(Math.random() * 60 + 15);
 
-    if (isDbConnected()) {
+    const dbActive = await ensureDBConnected();
+
+    if (dbActive) {
       const newPost = await Post.create({
         content: trimmedContent,
         color: selectedColor,
@@ -122,6 +124,7 @@ router.post('/', postRateLimiter, async (req, res, next) => {
       });
     }
 
+    // Yalnızca DB yoksa belleğe ekle
     const newMemoryPost = {
       id: `mem-${Date.now()}`,
       content: trimmedContent,
@@ -170,7 +173,9 @@ router.delete('/:id', async (req, res, next) => {
       });
     }
 
-    if (isDbConnected()) {
+    const dbActive = await ensureDBConnected();
+
+    if (dbActive) {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
           error: 'BadRequest',
@@ -255,7 +260,9 @@ router.post('/:id/like', likeRateLimiter, async (req, res, next) => {
       });
     }
 
-    if (isDbConnected()) {
+    const dbActive = await ensureDBConnected();
+
+    if (dbActive) {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
           error: 'BadRequest',
@@ -273,7 +280,6 @@ router.post('/:id/like', likeRateLimiter, async (req, res, next) => {
         });
       }
 
-      // KONTROL: Kullanıcı bu kartı daha önce beğendi mi?
       if (existingPost.likedBy && existingPost.likedBy.includes(userToken)) {
         return res.status(400).json({
           error: 'AlreadyLiked',
@@ -282,7 +288,6 @@ router.post('/:id/like', likeRateLimiter, async (req, res, next) => {
         });
       }
 
-      // 1 Beğeni artır ve listeye ekle
       const updatedPost = await Post.findByIdAndUpdate(
         id,
         {
@@ -313,7 +318,6 @@ router.post('/:id/like', likeRateLimiter, async (req, res, next) => {
 
     if (!found.likedBy) found.likedBy = [];
 
-    // KONTROL: Kullanıcı bu kartı daha önce beğendi mi?
     if (found.likedBy.includes(userToken)) {
       return res.status(400).json({
         error: 'AlreadyLiked',

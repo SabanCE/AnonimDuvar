@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { RefreshCw, Plus, MousePointerClick, ExternalLink } from 'lucide-react';
+import { RefreshCw, Plus, MousePointerClick, ExternalLink, Loader2 } from 'lucide-react';
 import { postsApi } from './services/api';
 import { NoteCard } from './components/NoteCard';
 import { ClickNoteCreator } from './components/ClickNoteCreator';
@@ -9,6 +9,8 @@ import corkboardBg from './assets/corkboard.jpg';
 function App() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [slowLoading, setSlowLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
   const [creatorState, setCreatorState] = useState(null);
@@ -22,11 +24,28 @@ function App() {
     setToast(null);
   };
 
-  const fetchPosts = useCallback(async () => {
+  const fetchPosts = useCallback(async (isRetry = false) => {
     setLoading(true);
+    setFetchError(false);
+
+    // If request takes longer than 2.5 seconds, notify that free server is waking up
+    const slowTimer = setTimeout(() => {
+      setSlowLoading(true);
+    }, 2500);
+
     const result = await postsApi.getPosts();
+    clearTimeout(slowTimer);
+    setSlowLoading(false);
+
     if (result.success) {
       setPosts(result.data);
+      setFetchError(false);
+    } else {
+      setFetchError(true);
+      // Auto-retry once after 4 seconds if server was cold starting
+      if (!isRetry) {
+        setTimeout(() => fetchPosts(true), 4000);
+      }
     }
     setLoading(false);
   }, []);
@@ -193,8 +212,30 @@ function App() {
 
       {/* Corkboard Canvas with Sticky Notes */}
       <main className="relative z-10 min-h-screen w-full pt-20 pb-28 px-4 sm:px-8">
-        {/* Empty state hint */}
-        {posts.length === 0 && !loading && (
+        {/* Loading / Cold Start indicator */}
+        {loading && posts.length === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-amber-950/80 px-4 text-center">
+            <Loader2 className="w-8 h-8 text-amber-900 animate-spin mb-3" />
+            <p className="text-base font-serif font-bold text-amber-950">Notlar Yükleniyor...</p>
+            {slowLoading && (
+              <p className="text-xs font-sans text-amber-900/80 mt-1 max-w-sm bg-[#fef9c3]/70 p-2.5 rounded-md border border-amber-900/20 shadow-sm animate-pulse">
+                ⏳ Ücretsiz sunucu uyku modundan uyanıyor, ilk açılış birkaç saniye sürebilir...
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Error / Reconnecting state */}
+        {!loading && fetchError && posts.length === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-amber-950/80 px-4 text-center">
+            <div className="w-6 h-6 rounded-full bg-amber-600 mb-2 shadow-md" />
+            <p className="text-sm font-serif font-bold text-amber-950">Sunucuya Bağlanılıyor...</p>
+            <p className="text-xs text-amber-900/80 mt-1">Sunucu uyandırılıyor, otomatik tekrar deneniyor...</p>
+          </div>
+        )}
+
+        {/* Real Empty state (only when loaded successfully and actually 0 posts) */}
+        {!loading && !fetchError && posts.length === 0 && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-amber-950/80">
             <div className="w-5 h-5 rounded-full bg-rose-600 mb-2 shadow-md" />
             <p className="text-sm font-serif font-bold text-amber-950">Mantar Pano Henüz Bomboş</p>
